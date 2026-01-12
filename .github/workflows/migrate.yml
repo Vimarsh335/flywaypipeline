@@ -24,7 +24,7 @@ jobs:
             -password="x1Mr39tZ0NoJLBuP" \
             migrate
 
-migrate-qa:
+  migrate-qa:
     name: Migrate QA
     runs-on: ubuntu-latest
    
