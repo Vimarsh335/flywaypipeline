@@ -19,7 +19,7 @@ jobs:
           docker run --rm \
             --volume ${{ github.workspace }}/migrations:/flyway/sql:ro \
             flyway/flyway:7.12.1-alpine \
-            -url="jdbc:postgresql://db.ullzupwchtqkzfyggcdk.supabase.co:5432/postgres?sslmode=require" \
-            -user="postgres" \
+            -url="jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require" \
+            -user="postgres.ullzupwchtqkzfyggcdk" \
             -password="x1Mr39tZ0NoJLBuP" \
             migrate
