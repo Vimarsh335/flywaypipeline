@@ -1,0 +1,25 @@
+name: Migrate database schema
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  migrate-database:
+    name: Run Flyway migrations
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run Flyway migrations
+        run: |
+          docker run --rm \
+            --volume ${{ github.workspace }}/migrations:/flyway/sql:ro \
+            flyway/flyway:7.12.1-alpine \
+            -url="jdbc:postgresql://db.ullzupwchtqkzfyggcdk.supabase.co:5432/postgres?sslmode=require" \
+            -user="postgres" \
+            -password="x1Mr39tZ0NoJLBuP" \
+            migrate
