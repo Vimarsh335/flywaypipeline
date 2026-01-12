@@ -8,7 +8,7 @@ on:
 jobs:
   migrate-database:
     name: Run Flyway migrations
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu
 
     steps:
       - name: Checkout code
