@@ -12,7 +12,7 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT
-        'tag v4',
+        'tag v5',
        'forward 2',
        'forward1',
         e.created_at
