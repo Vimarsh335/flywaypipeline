@@ -1,4 +1,4 @@
-CREATE TABLE public.demo (
+CREATE TABLE public.demo1 (
   user_id uuid REFERENCES auth.users NOT NULL PRIMARY KEY,
   username TEXT NULL,
   email TEXT NULL,
