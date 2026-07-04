@@ -12,7 +12,7 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT
-        e.user_id,
+        'forward 3',
        'forward 2',
        'forward',
         e.created_at
