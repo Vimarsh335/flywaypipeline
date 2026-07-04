@@ -15,7 +15,7 @@ BEGIN
         e.user_id,
         e.username,
         'forward',
-        e.created_at,
+        e.created_at
     FROM public.employee e
     WHERE e.user_id = p_user_id;
 END;
