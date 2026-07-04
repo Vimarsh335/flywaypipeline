@@ -13,8 +13,8 @@ BEGIN
     RETURN QUERY
     SELECT
         e.user_id,
-        e.username,
-        'forward',
+       'forward 2',
+       'forward',
         e.created_at
     FROM public.employee e
     WHERE e.user_id = p_user_id;
