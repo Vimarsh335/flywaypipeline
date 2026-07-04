@@ -19,25 +19,7 @@ jobs:
           docker run --rm \
             --volume ${{ github.workspace }}/migrations:/flyway/sql:ro \
             flyway/flyway:7.12.1-alpine \
-            -url="jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0" \
-            -user="postgres.ullzupwchtqkzfyggcdk" \
-            -password="x1Mr39tZ0NoJLBuP" \
+            -url="jdbc:postgresql://aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require&prepareThreshold=0" \
+            -user="postgres.ionhmxylsljmvebxvicx" \
+            -password="dYVE6!P,T6uzSub" \
             migrate
-
-  migrate-qa:
-    name: Migrate QA
-    runs-on: ubuntu-latest
-   
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Flyway migrate QA
-        run: |
-          docker run --rm \
-            --volume ${{ github.workspace }}/migrations:/flyway/sql:ro \
-            flyway/flyway:7.12.1-alpine \
-            -url="jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require&prepareThreshold=0" \
-            -user="postgres.bchmnkmumiiebvlwbsvl" \
-            -password="x1Mr39tZ0NoJLBuP" \
-            migrate      
-
