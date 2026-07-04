@@ -12,9 +12,7 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT
-        'forward 3',
-       'forward 2',
-       'forward',
+        'on tag v2'
         e.created_at
     FROM public.employee e
     WHERE e.user_id = p_user_id;
