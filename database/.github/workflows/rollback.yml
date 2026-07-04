@@ -50,8 +50,8 @@ jobs:
       - name: Run Flyway
         run: |
           docker run --rm \
-            --volume ${{ github.workspace }}/migration:/flyway/sql:ro \
-            --volume ${{ github.workspace }}/repeatable:/flyway/sql/repeatable:ro \
+            --volume ${{ github.workspace }}/database/schema:/flyway/sql:ro \
+            --volume ${{ github.workspace }}/database/repeatable:/flyway/sql/repeatable:ro \
             flyway/flyway:7.12.1-alpine \
             -url="jdbc:postgresql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}?sslmode=require&prepareThreshold=0" \
             -user="${{ secrets.DB_USER }}" \
