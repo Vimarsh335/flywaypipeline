@@ -1,0 +1,59 @@
+name: Database Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_tag:
+        description: "Git tag containing previous repeatable scripts"
+        required: true
+
+jobs:
+  rollback-database:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Checkout latest code
+      - name: Checkout Current Branch
+        uses: actions/checkout@v4
+
+      ####################################################
+      # Execute Undo Scripts
+      ####################################################
+      - name: Execute Undo Scripts
+        env:
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          for file in undo/*.sql
+          do
+            echo "Executing $file"
+
+            psql \
+              -h "${{ secrets.DB_HOST }}" \
+              -p "${{ secrets.DB_PORT }}" \
+              -U "${{ secrets.DB_USER }}" \
+              -d "${{ secrets.DB_NAME }}" \
+              -f "$file"
+
+          done
+
+      ####################################################
+      # Restore Repeatables from Previous Tag
+      ####################################################
+      - name: Restore Repeatables
+        run: |
+          git checkout ${{ github.event.inputs.rollback_tag }} -- repeatable/
+
+      ####################################################
+      # Run Flyway
+      ####################################################
+      - name: Run Flyway
+        run: |
+          docker run --rm \
+            --volume ${{ github.workspace }}/migration:/flyway/sql:ro \
+            --volume ${{ github.workspace }}/repeatable:/flyway/sql/repeatable:ro \
+            flyway/flyway:7.12.1-alpine \
+            -url="jdbc:postgresql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}?sslmode=require&prepareThreshold=0" \
+            -user="${{ secrets.DB_USER }}" \
+            -password="${{ secrets.DB_PASSWORD }}" \
+            migrate
