@@ -11,12 +11,6 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT
-        e.user_id,
-        e.username,
-        e.email,
-        e.created_at
-    FROM public.employee e
-    WHERE e.user_id = p_user_id;
+   RAISE NOTICE 'Fetching employee with user_id: %', p_user_id;
 END;
 $$;
