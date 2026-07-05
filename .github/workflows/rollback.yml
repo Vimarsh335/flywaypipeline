@@ -1,96 +1,97 @@
-name: Database Rollback
+  name: Database Rollback
 
-on:
-  workflow_dispatch:
-    inputs:
-      rollback_tag:
-        description: "Rollback Git Tag"
-        required: true
+  on:
+    workflow_dispatch:
+      inputs:
+        rollback_tag:
+          description: "Rollback Git Tag"
+          required: true
 
-jobs:
-  rollback:
-    runs-on: ubuntu-latest
+  jobs:
+    rollback:
+      runs-on: ubuntu-latest
 
-    steps:
+      steps:
 
-      - name: Checkout Current Branch
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        - name: Checkout Current Branch
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
 
-      ##########################################################
-      # Detect what changed
-      ##########################################################
+        ##########################################################
+        # Detect what changed
+        ##########################################################
 
-      - name: Detect Changed Files
-        id: detect
-        run: |
+        - name: Detect Changed Files
+          id: detect
+          run: |
 
-          git fetch --tags
+            git fetch --tags
 
-          SCHEMA_CHANGED=$(git diff --name-only ${{ github.event.inputs.rollback_tag }} HEAD | grep "^database/schema/" || true)
+            SCHEMA_CHANGED=$(git diff --name-only ${{ github.event.inputs.rollback_tag }} HEAD | grep "^database/schema/" || true)
 
-          REPEATABLE_CHANGED=$(git diff --name-only ${{ github.event.inputs.rollback_tag }} HEAD | grep "^database/repeatables/" || true)
+            REPEATABLE_CHANGED=$(git diff --name-only ${{ github.event.inputs.rollback_tag }} HEAD | grep "^database/repeatables/" || true)
 
-          if [ -n "$SCHEMA_CHANGED" ]; then
-            echo "schema_changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "schema_changed=false" >> $GITHUB_OUTPUT
-          fi
+            if [ -n "$SCHEMA_CHANGED" ]; then
+              echo "schema_changed=true" >> $GITHUB_OUTPUT
+            else
+              echo "schema_changed=false" >> $GITHUB_OUTPUT
+            fi
 
-          if [ -n "$REPEATABLE_CHANGED" ]; then
-            echo "repeatable_changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "repeatable_changed=false" >> $GITHUB_OUTPUT
-          fi
+            if [ -n "$REPEATABLE_CHANGED" ]; then
+              echo "repeatable_changed=true" >> $GITHUB_OUTPUT
+            else
+              echo "repeatable_changed=false" >> $GITHUB_OUTPUT
+            fi
 
-      ##########################################################
-      # Install PostgreSQL Client
-      ##########################################################
+        ##########################################################
+        # Install PostgreSQL Client
+        ##########################################################
 
-      - name: Install PostgreSQL
-        if: steps.detect.outputs.schema_changed == 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
+        - name: Install PostgreSQL
+          if: steps.detect.outputs.schema_changed == 'true'
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
 
-      ##########################################################
-      # Execute Undo only if schema changed
-      ##########################################################
+        ##########################################################
+        # Execute Undo only if schema changed
+        ##########################################################
 
-      - name: Execute Latest Undo
-        if: steps.detect.outputs.schema_changed == 'true'
-        env:
-          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: |
-          chmod +x database/scripts/runUndo.sh
+        - name: Execute Latest Undo
+          if: steps.detect.outputs.schema_changed == 'true'
+          env:
+            PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+          run: |
+            chmod +x database/scripts/runUndo.sh
 
-          database/scripts/runUndo.sh \
-          "${{ secrets.DB_HOST }}" \
-          "${{ secrets.DB_PORT }}" \
-          "${{ secrets.DB_NAME }}" \
-          "${{ secrets.DB_USER }}"
+            database/scripts/runUndo.sh \
+            "${{ github.event.inputs.rollback_tag }}" \
+            "${{ secrets.DB_HOST }}" \
+            "${{ secrets.DB_PORT }}" \
+            "${{ secrets.DB_NAME }}" \
+            "${{ secrets.DB_USER }}"
 
-      ##########################################################
-      # Restore Repeatables only if repeatables changed
-      ##########################################################
+        ##########################################################
+        # Restore Repeatables only if repeatables changed
+        ##########################################################
 
-      - name: Restore Repeatables
-        if: steps.detect.outputs.repeatable_changed == 'true'
-        run: |
-          git checkout ${{ github.event.inputs.rollback_tag }} -- database/repeatables
+        - name: Restore Repeatables
+          if: steps.detect.outputs.repeatable_changed == 'true'
+          run: |
+            git checkout ${{ github.event.inputs.rollback_tag }} -- database/repeatables
 
-      ##########################################################
-      # Run Flyway
-      ##########################################################
+        ##########################################################
+        # Run Flyway
+        ##########################################################
 
-      - name: Flyway Migrate
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}/database:/flyway/project \
-            flyway/flyway:7.12.1-alpine \
-            -locations=filesystem:/flyway/project/schema,filesystem:/flyway/project/repeatables \
-            -url="jdbc:postgresql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}?sslmode=require&prepareThreshold=0" \
-            -user="${{ secrets.DB_USER }}" \
-            -password="${{ secrets.DB_PASSWORD }}" \
-            migrate
+        - name: Flyway Migrate
+          run: |
+            docker run --rm \
+              -v ${{ github.workspace }}/database:/flyway/project \
+              flyway/flyway:7.12.1-alpine \
+              -locations=filesystem:/flyway/project/schema,filesystem:/flyway/project/repeatables \
+              -url="jdbc:postgresql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}?sslmode=require&prepareThreshold=0" \
+              -user="${{ secrets.DB_USER }}" \
+              -password="${{ secrets.DB_PASSWORD }}" \
+              migrate
