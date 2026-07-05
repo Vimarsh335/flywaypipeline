@@ -1,25 +1,53 @@
 #!/bin/bash
 
-HOST=$1
-PORT=$2
-DB=$3
-USER=$4
+ROLLBACK_TAG=$1
+HOST=$2
+PORT=$3
+DB=$4
+USER=$5
 
-UNDO_FOLDER="database/undo"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-for file in "$UNDO_FOLDER"/*.sql
+echo "Rollback Tag : $ROLLBACK_TAG"
+
+cd "$ROOT_DIR"
+
+git fetch --tags
+
+echo "Finding versioned migrations to rollback..."
+
+FILES=$(git diff --name-only "$ROLLBACK_TAG" HEAD -- database/schema | grep "database/schema/V.*\.sql$" | sort -Vr)
+
+if [ -z "$FILES" ]; then
+    echo "No versioned migrations to rollback."
+    exit 0
+fi
+
+echo "$FILES"
+
+for file in $FILES
 do
-    if [ ! -f "$file" ]; then
-        echo "No undo scripts found."
-        exit 0
+    VERSION=$(basename "$file")
+
+    VERSION=$(echo "$VERSION" | sed -E 's/^V([0-9]+).*/\1/')
+
+    UNDO_FILE="$ROOT_DIR/database/undo/U${VERSION}__*.sql"
+
+    FOUND=$(ls $UNDO_FILE 2>/dev/null)
+
+    if [ -z "$FOUND" ]; then
+        echo "Undo script not found for version $VERSION"
+        exit 1
     fi
 
-    echo "Executing $file"
+    echo "Executing $FOUND"
 
     PGPASSWORD=$PGPASSWORD psql \
         -h "$HOST" \
         -p "$PORT" \
         -U "$USER" \
         -d "$DB" \
-        -f "$file"
+        -f "$FOUND"
+
 done
