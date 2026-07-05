@@ -17,7 +17,39 @@
           uses: actions/checkout@v4
           with:
             fetch-depth: 0
+         ##########################################################
+      # Fetch all tags
+      ##########################################################
 
+        - name: Fetch Tags
+          run: |
+            git fetch --all --tags --force
+
+      ##########################################################
+      # Debug
+      ##########################################################
+
+        - name: Debug Repository
+          run: |
+           echo "Rollback Tag = '${{ github.event.inputs.rollback_tag }}'"
+
+           echo ""
+           echo "Available Tags"
+           git tag
+
+           echo ""
+           echo "Remote Tags"
+           git ls-remote --tags origin
+
+           echo ""
+           echo "Current Commit"
+           git log --oneline -5
+
+           echo ""
+           echo "Checking Tag..."
+
+           git rev-parse "refs/tags/${{ github.event.inputs.rollback_tag }}"
+    
         ##########################################################
         # Detect what changed
         ##########################################################
